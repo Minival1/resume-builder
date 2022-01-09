@@ -1,0 +1,59 @@
+#components-layout-demo-custom-trigger .logo {
+	height: 32px;
+	margin: 16px;
+	background: rgba(255, 255, 255, 0.3);
+}
+
+.site-layout .site-layout-background {
+	background: #fff;
+}
+
+.layout {
+	min-height: 100vh !important;
+}
+
+.site-layout-background {
+	margin: 24px 16px;
+	padding: 24px;
+}
+
+.avatar {
+	height: 100px;
+	width: 100px;
+	object-fit: cover;
+	display: inline-block;
+	margin-left: 40px;
+}
+
+.avatar-circle {
+	border-radius: 50%;
+}
+
+.avatar-btn {
+	height: 40px;
+	padding: 6.4px 20px;
+	font-size: 16px;
+	border-radius: 40px;
+	display: inline-block;
+	color: #fff;
+	border-color: #1890ff;
+	background: #1890ff;
+	text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
+	box-shadow: 0 2px 0 rgb(0 0 0 / 5%);
+	transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+	cursor: pointer;
+
+	& svg {
+		margin-right: 8px;
+	}
+
+	&:hover {
+		color: #fff;
+		border-color: #40a9ff;
+		background: #40a9ff;
+	}
+}
+
+.error-input {
+	border-color: red !important;
+}
