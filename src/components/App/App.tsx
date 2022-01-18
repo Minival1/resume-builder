@@ -4,7 +4,6 @@ import Nav from "../Nav/Nav";
 
 import "./App.scss";
 import CreateResumePage from "../../pages/CreateResumePage";
-import ResumesPage from "../../pages/ResumesPage";
 
 const { Content } = Layout;
 
@@ -16,7 +15,6 @@ const App = () => {
                 <Content className="site-layout-background">
                     <Routes>
                         <Route path="*" element={<CreateResumePage />}/>
-                        <Route path="/resumes" element={<ResumesPage />}/>
                     </Routes>
                 </Content>
             </Layout>

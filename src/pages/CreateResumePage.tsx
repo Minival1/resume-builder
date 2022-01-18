@@ -1,25 +1,23 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {FieldArray, FormikProvider, useFormik} from "formik";
 import * as Yup from 'yup';
-import {SaveOutlined, UserOutlined, PhoneOutlined, PlusOutlined, MinusOutlined, UploadOutlined } from '@ant-design/icons';
-import { DatePicker, Button, Row, Space, Input, Upload, Card } from 'antd';
+import {SaveOutlined, UserOutlined, PhoneOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Row, Space, Input, Upload } from 'antd';
 import MaskedInput from 'antd-mask-input'
 import classNames from "classnames";
 import moment from "moment";
-
-import {diffToString} from "../helpers/index";
+import {ExperienceWork} from "../interfaces/Resume"
 
 import "moment-precise-range-plugin";
 import 'moment/locale/ru';
 import {useAppDispatch} from "../store/hooks";
 import { addResume } from '../slices/resumesSlice';
-
-const { RangePicker } = DatePicker
+import ExperienceWorkComponent from "../components/ExperienceWork/ExperienceWork";
 
 moment.locale("ru")
 
 const CreateResumePage = () => {
-    const initialWorkExp: any = {
+    const initialWorkExp: ExperienceWork = {
         date: [],
         company: "",
         descr: "",
@@ -29,6 +27,21 @@ const CreateResumePage = () => {
     const [workExp, setWorkExp] = useState([{...initialWorkExp}])
     const [uploadError, setUploadError] = useState("")
     const [uploadImg, setUploadImg] = useState<any>(false)
+    const [allErrors, setAllErrors] = useState(null)
+
+    const previewImgSquare = useRef<any>(null)
+    const previewImgCircle = useRef<any>(null)
+    const nameRef = useRef<any>(null)
+    const phoneRef = useRef<any>(null)
+    const workExpRefs = useRef<any>([])
+
+    const addRef = (el: any, fieldName: string, i: number) => {
+        workExpRefs.current[i] = {
+            ...workExpRefs.current[i],
+            [fieldName]: el
+        }
+    }
+
     const dispatch = useAppDispatch()
 
     const formik = useFormik({
@@ -66,16 +79,39 @@ const CreateResumePage = () => {
             setUploadImg(false)
             setUploadError("")
 
-            const square = document.querySelectorAll('.avatar');
-            square.forEach((img: any) => {
-                img.src = "./no_image.jpg"
-            })
+            previewImgSquare.current.src = "./no_image.jpg"
 
-            formik.resetForm()
+            resetForm()
         },
         validateOnChange: false,
         validateOnBlur: false
     }) as any
+
+    const {handleSubmit, errors, values, handleChange, setFieldValue, setFieldError, resetForm} = formik
+
+    useEffect(() => {
+        if (errors.fullName) {
+            nameRef.current.focus()
+        } else if (errors.phone) {
+            phoneRef.current.focus()
+        } else if (errors.experienceWork) {
+            for (const [i, error] of errors.experienceWork.entries()) {
+                if (error?.company) {
+                    workExpRefs.current[i].company.focus()
+                    break
+                }
+                if (error?.descr) {
+                    workExpRefs.current[i].descr.focus()
+                    break
+                }
+                if (error?.date) {
+                    workExpRefs.current[i].date.focus()
+                    break
+                }
+            }
+        }
+        // eslint-disable-next-line
+    }, [allErrors])
 
     const uploadProps = {
         beforeUpload: (file: any) => {
@@ -95,21 +131,28 @@ const CreateResumePage = () => {
             }
 
             setUploadImg(file)
-            formik.setFieldValue("avatar", file)
+            setFieldValue("avatar", file)
             setUploadError("")
 
             return false
         },
         onChange: (info: any) => {
-            formik.setFieldError("avatar", "")
+            setFieldError("avatar", "")
 
-            const square = document.querySelectorAll('.avatar');
-            square.forEach((img: any) => {
-                img.src = URL.createObjectURL(info.file)
-                img.onload = function () {
-                    URL.revokeObjectURL(img.src)
-                }
-            })
+            const imgSquare = previewImgSquare.current
+            const imgCircle = previewImgCircle.current
+
+            const objectFile = URL.createObjectURL(info.file)
+
+            imgSquare.src = objectFile
+            imgSquare.onload = function () {
+                URL.revokeObjectURL(imgSquare)
+            }
+
+            imgCircle.src = objectFile
+            imgCircle.onload = function () {
+                URL.revokeObjectURL(imgCircle)
+            }
         },
     }
 
@@ -129,8 +172,8 @@ const CreateResumePage = () => {
             const newState = prev.map((range, rangeIndex) => {
                 if (rangeIndex !== prev.length - 1) {
                     const nextRange = prev[rangeIndex + 1]
-                    const [startTime, endTime] = range.date
-                    const [nextStartTime, nextEndTime] = nextRange.date
+                    const endTime = range.date[1]
+                    const nextStartTime = nextRange.date[0]
 
                     if (moment(endTime) > moment(nextStartTime)) {
                         return {...range, error: "Дата начала не может быть раньше даты окончания предыдущего места работы"}
@@ -139,32 +182,41 @@ const CreateResumePage = () => {
                 return {...range, error: ""}
             })
 
-            formik.setFieldValue("experienceWork", newState)
+            setFieldValue("experienceWork", newState)
 
             return newState
         })
     }
 
+    const submit = (e: any) => {
+        handleSubmit(e)
+        setTimeout(() => {
+            setAllErrors({...errors})
+        }, 0)
+    }
+
     return (
         <div>
             <FormikProvider value={formik}>
-            <form onSubmit={formik.handleSubmit}>
+            <form onSubmit={submit}>
                 <Space size="middle" direction="vertical">
                     <Row>
                         <div>
                             <Upload {...uploadProps} fileList={uploadImg ? [uploadImg] : []}>
-                                <Button size="large" danger={Boolean(formik.errors.avatar || uploadError)} icon={<UploadOutlined />}>Загрузить аватар</Button>
+                                <Button size="large"
+                                        danger={Boolean(errors.avatar || uploadError)}
+                                        icon={<UploadOutlined />}>Загрузить аватар</Button>
                             </Upload>
                             {uploadError ?
                                 <div>{uploadError}</div>
                                 : null}
-                            {formik.errors.avatar ?
-                                <div>{formik.errors.avatar}</div>
+                            {errors.avatar ?
+                                <div>{errors.avatar}</div>
                                 : null}
                         </div>
-                        <img className="avatar avatar-square" src="./no_image.jpg" alt=""/>
+                        <img ref={previewImgSquare} className="avatar avatar-square" src="./no_image.jpg" alt=""/>
                         {uploadImg ?
-                            <img className="avatar avatar-circle" src="#" alt=""/>
+                            <img ref={previewImgCircle} className="avatar avatar-circle" src="#" alt=""/>
                             : null}
                     </Row>
                     <Row>
@@ -173,22 +225,23 @@ const CreateResumePage = () => {
                                 <Space size={2} direction="vertical">
                                     <span>ФИО</span>
                                     <Input
-                                        className={classNames({"error-input": formik.errors.fullName})}
+                                        ref={nameRef}
+                                        className={classNames({"error-input": errors.fullName})}
                                         size="large"
                                         type="text"
                                         placeholder="Ваше ФИО"
                                         name="fullName"
                                         prefix={<UserOutlined />}
-                                        value={formik.values.fullName}
+                                        value={values.fullName}
                                         onChange={(e) => {
-                                            formik.handleChange(e)
-                                            formik.setFieldError("fullName", "")
+                                            handleChange(e)
+                                            setFieldError("fullName", "")
                                         }}
                                     />
                                 </Space>
                             </label>
-                            {formik.errors.fullName ?
-                                <div>{formik.errors.fullName}</div>
+                            {errors.fullName ?
+                                <div>{errors.fullName}</div>
                                 : null}
                         </Space>
                     </Row>
@@ -198,22 +251,23 @@ const CreateResumePage = () => {
                                 <Space size={2} direction="vertical">
                                     <span>Телефон</span>
                                     <MaskedInput
-                                        className={classNames({"error-input": formik.errors.phone})}
+                                        ref={phoneRef}
+                                        className={classNames({"error-input": errors.phone})}
                                         prefix={<PhoneOutlined />}
                                         size="large"
                                         mask="+7 (111)-11-11-111"
                                         name="phone"
                                         placeholder="+7"
-                                        value={formik.values.phone}
+                                        value={values.phone}
                                         onChange={(e: any) => {
-                                            formik.handleChange(e)
-                                            formik.setFieldError("phone", "")
+                                            handleChange(e)
+                                            setFieldError("phone", "")
                                         }}
                                     />
                                 </Space>
                             </label>
-                            {formik.errors.phone ?
-                                <div>{formik.errors.phone}</div>
+                            {errors.phone ?
+                                <div>{errors.phone}</div>
                                 : null}
                         </Space>
                     </Row>
@@ -221,161 +275,14 @@ const CreateResumePage = () => {
                         <FieldArray
                             name="experienceWork"
                             render={() => (
-                                <Space size={10} direction="vertical">
-                                    <span>Опыт работы</span>
-                                    {workExp.map((item, i: number) => {
-                                        {moment(workExp[i].date[0]).from(moment(workExp[i].date[1]), true)}
-                                        const [startTime, endTime] = workExp[i].date
-                                        const m1 = moment(startTime, "YYYY-MM-DD")
-                                        const m2 = moment(endTime, "YYYY-MM-DD")
-                                        // @ts-ignore
-                                        const diff = moment.preciseDiff(m1, m2, true)
-
-                                        return (
-                                            <Space key={i}>
-                                                <Card>
-                                                    <Space size={10} direction="vertical">
-                                                        <label>
-                                                            <Space size={2} direction="vertical">
-                                                                <span>Название компании</span>
-                                                                <Input
-                                                                    className={classNames({"error-input": formik.errors.experienceWork && formik.errors.experienceWork[i] && formik.errors.experienceWork[i].company})}
-                                                                    size="large"
-                                                                    type="text"
-                                                                    placeholder="Название"
-                                                                    name={`experienceWork.${i}.company`}
-                                                                    value={formik.values.experienceWork[i].company}
-                                                                    onChange={(e) => {
-                                                                        setWorkExp((prev) => {
-                                                                            const newState = [...prev]
-                                                                            newState[i].company = e.target.value
-                                                                            return newState
-                                                                        })
-                                                                        formik.setFieldValue(`experienceWork.${i}.company`, e.target.value)
-                                                                        formik.setFieldError(`experienceWork.${i}.company`, "")
-                                                                    }}
-                                                                />
-                                                            </Space>
-                                                        </label>
-                                                        {formik.errors.experienceWork &&
-                                                        formik.errors.experienceWork[i] &&
-                                                        formik.errors.experienceWork[i].company ?
-                                                        <div>{formik.errors.experienceWork[i].company}</div>: null}
-                                                        <label>
-                                                            <Space size={2} direction="vertical">
-                                                                <span>Описание</span>
-                                                                <Input
-                                                                    className={classNames({"error-input": formik.errors.experienceWork && formik.errors.experienceWork[i] && formik.errors.experienceWork[i].descr})}
-                                                                    size="large"
-                                                                    type="text"
-                                                                    placeholder="Описание"
-                                                                    name={`experienceWork.${i}.descr`}
-                                                                    value={formik.values.experienceWork[i].descr}
-                                                                    onChange={(e) => {
-                                                                        setWorkExp((prev) => {
-                                                                            const newState = [...prev]
-                                                                            newState[i].descr = e.target.value
-                                                                            return newState
-                                                                        })
-                                                                        formik.setFieldValue(`experienceWork.${i}.descr`, e.target.value)
-                                                                        formik.setFieldError(`experienceWork.${i}.descr`, "")
-                                                                    }}
-                                                                />
-                                                            </Space>
-                                                        </label>
-                                                        {formik.errors.experienceWork &&
-                                                        formik.errors.experienceWork[i] &&
-                                                        formik.errors.experienceWork[i].descr ?
-                                                        <div>{formik.errors.experienceWork[i].descr}</div>: null}
-                                                        <label>
-                                                            <Space size={2} direction="vertical">
-                                                                <span>Время работы</span>
-                                                                <RangePicker
-                                                                    className={classNames({"error-input": (formik.errors.experienceWork && formik.errors.experienceWork[i] && (formik.errors.experienceWork[i].date || formik.errors.experienceWork[i].error))})}
-                                                                    size="large"
-                                                                    value={startTime && endTime ?
-                                                                        [moment(startTime), moment(endTime)] :
-                                                                        [null, null]}
-                                                                    placeholder={["Дата начала", "Дата окончания"]}
-                                                                    onChange={(date, dateString: any) => {
-
-                                                                        setWorkExp((prev): any => {
-                                                                            const newState = [...prev]
-                                                                            const [startTime, endTime] = dateString
-
-                                                                            if (!dateString[0] || !dateString[1]) {
-                                                                                newState[i] = {...newState[i], date: ["", ""]}
-                                                                            } else {
-                                                                                newState[i] = {...newState[i], date: [startTime, endTime]}
-                                                                            }
-
-                                                                            return newState
-                                                                        })
-
-                                                                        validateWorkExp()
-
-                                                                        formik.setFieldValue(`experienceWork.${i}.date`, dateString)
-
-                                                                        formik.setFieldError(`experienceWork.${i}.date`, "")
-                                                                        formik.setFieldError(`experienceWork.${i}.error`, "")
-                                                                    }}
-                                                                    disabledDate={(current: any) => {
-                                                                        if (i > 0) {
-                                                                            const prevItem = workExp[i - 1]
-                                                                            const [prevStartTime, prevEndTime] = prevItem.date
-
-                                                                            return current && current < moment(prevEndTime).endOf('day')
-                                                                        }
-                                                                    }}
-                                                                />
-                                                            </Space>
-                                                        </label>
-                                                        {workExp[i].date[0] && workExp[i].date[1] ?
-                                                            <div>
-                                                                {diffToString(diff)}
-                                                            </div> : null}
-
-                                                        {formik.errors.experienceWork &&
-                                                        formik.errors.experienceWork[i] &&
-                                                        formik.errors.experienceWork[i].date ?
-                                                        <div>{formik.errors.experienceWork[i].date}</div>: null}
-
-                                                        {formik.errors.experienceWork &&
-                                                        formik.errors.experienceWork[i] &&
-                                                        formik.errors.experienceWork[i].error ?
-                                                            <div>{formik.errors.experienceWork[i].error}</div>: null}
-                                                    </Space>
-                                                </Card>
-                                                {i !== 0 ?
-                                                    <Button
-                                                        size="small"
-                                                        danger
-                                                        type="primary"
-                                                        icon={<MinusOutlined />}
-                                                        onClick={() => {
-                                                            setWorkExp((prev) => prev.filter((stateItem, stateI) => i !== stateI))
-
-                                                            validateWorkExp()
-                                                        }}
-                                                    /> : null}
-                                            </Space>
-                                        )
-                                    })}
-                                    <Button
-                                        size="large"
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={() => {
-                                            setWorkExp((prev) => {
-                                                const newState = [...prev]
-                                                newState.push({ ...initialWorkExp })
-                                                formik.setFieldValue("experienceWork", newState)
-
-                                                return newState
-                                            })
-                                        }}
-                                    />
-                                </Space>
+                               <ExperienceWorkComponent
+                                    addRef={addRef}
+                                    workExp={workExp}
+                                    setWorkExp={setWorkExp}
+                                    formik={formik}
+                                    validateWorkExp={validateWorkExp}
+                                    initialWorkExp={initialWorkExp}
+                               />
                             )}
                         />
                     </Row>
