@@ -1,10 +1,10 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import counterReducer from '../slices/counterSlice';
+import resumes from "../slices/resumesSlice"
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
-  },
+    resumes
+  }
 });
 
 export type AppDispatch = typeof store.dispatch;
