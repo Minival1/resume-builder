@@ -1,5 +1,15 @@
-export function diffToString(dateObj) {
-    const days = {
+interface DateObj {
+    years: number,
+    days: number,
+    months: number
+}
+
+interface IObjectKeys {
+    [key: string]: string | number;
+}
+
+export function diffToString(dateObj: DateObj) {
+    const days: IObjectKeys = {
         0: "дней",
         1: "день",
         2: "дня",
@@ -11,7 +21,7 @@ export function diffToString(dateObj) {
         8: "дней",
         9: "дней",
     }
-    const months = {
+    const months: IObjectKeys = {
         0: "месяцев",
         1: "месяц",
         2: "месяца",
@@ -23,7 +33,7 @@ export function diffToString(dateObj) {
         8: "месяцев",
         9: "месяцев",
     }
-    const years = {
+    const years: IObjectKeys = {
         0: "лет",
         1: "год",
         2: "года",
@@ -42,21 +52,21 @@ export function diffToString(dateObj) {
         const yearsStr = String(dateObj.years)
         const last = yearsStr[yearsStr.length - 1]
 
-        result += `${dateObj.years} ${years[last]} `
+        result += `${dateObj.years} ${years[last as keyof typeof years]} `
     }
 
     if (dateObj.months !== 0) {
         const monthsStr = String(dateObj.months)
-        const last = monthsStr[monthsStr.length - 1]
+        const last: any = +monthsStr[monthsStr.length - 1]
 
-        result += `${dateObj.months} ${months[last]} `
+        result += `${dateObj.months} ${months[last as keyof typeof months]} `
     }
 
     if (dateObj.days !== 0) {
         const daysStr = String(dateObj.days)
         const last = daysStr[daysStr.length - 1]
 
-        result += `${dateObj.days} ${days[last]} `
+        result += `${dateObj.days} ${days[last as keyof typeof days]} `
     }
 
     return result

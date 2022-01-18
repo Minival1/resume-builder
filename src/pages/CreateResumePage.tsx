@@ -16,6 +16,12 @@ import ExperienceWorkComponent from "../components/ExperienceWork/ExperienceWork
 
 moment.locale("ru")
 
+export type WorkExpRef = {
+    company: HTMLInputElement,
+    descr: HTMLInputElement,
+    date: HTMLInputElement
+}
+
 const CreateResumePage = () => {
     const initialWorkExp: ExperienceWork = {
         date: [],
@@ -29,11 +35,11 @@ const CreateResumePage = () => {
     const [uploadImg, setUploadImg] = useState<any>(false)
     const [allErrors, setAllErrors] = useState(null)
 
-    const previewImgSquare = useRef<any>(null)
-    const previewImgCircle = useRef<any>(null)
-    const nameRef = useRef<any>(null)
-    const phoneRef = useRef<any>(null)
-    const workExpRefs = useRef<any>([])
+    const previewImgSquare = useRef<HTMLImageElement>(null)
+    const previewImgCircle = useRef<HTMLImageElement>(null)
+    const nameRef = useRef<HTMLInputElement>(null)
+    const phoneRef = useRef<HTMLInputElement>(null)
+    const workExpRefs = useRef<Array<WorkExpRef>>([])
 
     const addRef = (el: any, fieldName: string, i: number) => {
         workExpRefs.current[i] = {
@@ -79,7 +85,9 @@ const CreateResumePage = () => {
             setUploadImg(false)
             setUploadError("")
 
-            previewImgSquare.current.src = "./no_image.jpg"
+            if (previewImgSquare.current !== null) {
+                previewImgSquare.current.src = "./no_image.jpg"
+            }
 
             resetForm()
         },
@@ -90,9 +98,9 @@ const CreateResumePage = () => {
     const {handleSubmit, errors, values, handleChange, setFieldValue, setFieldError, resetForm} = formik
 
     useEffect(() => {
-        if (errors.fullName) {
+        if (errors.fullName && nameRef.current) {
             nameRef.current.focus()
-        } else if (errors.phone) {
+        } else if (errors.phone && phoneRef.current) {
             phoneRef.current.focus()
         } else if (errors.experienceWork) {
             for (const [i, error] of errors.experienceWork.entries()) {
@@ -144,14 +152,20 @@ const CreateResumePage = () => {
 
             const objectFile = URL.createObjectURL(info.file)
 
-            imgSquare.src = objectFile
-            imgSquare.onload = function () {
-                URL.revokeObjectURL(imgSquare)
+            if (imgSquare) {
+                imgSquare.src = objectFile
+                imgSquare.onload = function () {
+                    // @ts-ignore
+                    URL.revokeObjectURL(imgSquare)
+                }
             }
 
-            imgCircle.src = objectFile
-            imgCircle.onload = function () {
-                URL.revokeObjectURL(imgCircle)
+            if (imgCircle) {
+                imgCircle.src = objectFile
+                imgCircle.onload = function () {
+                    // @ts-ignore
+                    URL.revokeObjectURL(imgCircle)
+                }
             }
         },
     }
@@ -225,7 +239,7 @@ const CreateResumePage = () => {
                                 <Space size={2} direction="vertical">
                                     <span>ФИО</span>
                                     <Input
-                                        ref={nameRef}
+                                        ref={nameRef as any}
                                         className={classNames({"error-input": errors.fullName})}
                                         size="large"
                                         type="text"

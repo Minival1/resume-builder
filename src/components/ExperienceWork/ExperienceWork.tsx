@@ -11,7 +11,7 @@ const { RangePicker } = DatePicker
 
 interface Props {
     workExp: Array<ExperienceWork>,
-    setWorkExp: (state: any) => void,
+    setWorkExp: (state: (prev: ExperienceWork[]) => ExperienceWork[]) => any,
     formik: any,
     validateWorkExp: () => void,
     initialWorkExp: ExperienceWork,
@@ -22,7 +22,7 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
     const { errors, values, setFieldValue, setFieldError } = formik
 
     const companyHandler = (i: number) => (e: any) => {
-        setWorkExp((prev: any) => {
+        setWorkExp((prev) => {
             const newState = [...prev]
             newState[i].company = e.target.value
             return newState
@@ -32,7 +32,7 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
     }
 
     const descrHandler = (i: number) => (e: any) => {
-        setWorkExp((prev: any) => {
+        setWorkExp((prev) => {
             const newState = [...prev]
             newState[i].descr = e.target.value
             return newState
@@ -42,7 +42,7 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
     }
 
     const dateHandler = (i: number) => (date: any, dateString: Array<string>) => {
-        setWorkExp((prev: any) => {
+        setWorkExp((prev) => {
             const newState = [...prev]
             const [startTime, endTime] = dateString
 
@@ -63,15 +63,19 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
         setFieldError(`experienceWork.${i}.error`, "")
     }
 
+    const getDiffBetweenDates = (startDate: object | string, endDate: object | string) => {
+        const m1 = moment(startDate, "YYYY-MM-DD")
+        const m2 = moment(endDate, "YYYY-MM-DD")
+        // @ts-ignore
+        return moment.preciseDiff(m1, m2, true)
+    }
+
     return (
         <Space size={10} direction="vertical">
             <span>Опыт работы</span>
             {workExp.map((item, i: number) => {
                 const [startTime, endTime] = workExp[i].date
-                const m1 = moment(startTime, "YYYY-MM-DD")
-                const m2 = moment(endTime, "YYYY-MM-DD")
-                // @ts-ignore
-                const diff = moment.preciseDiff(m1, m2, true)
+                const diff = getDiffBetweenDates(startTime, endTime)
 
                 return (
                     <Space key={i}>
@@ -104,7 +108,7 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
                                     <Space size={2} direction="vertical">
                                         <span>Описание</span>
                                         <Input
-                                            ref={(el) => addRef(el, "descr", i)}
+                                            ref={(el: Input) => addRef(el, "descr", i)}
                                             className={classNames({
                                                 "error-input": errors.experienceWork &&
                                                     errors.experienceWork[i] &&
@@ -175,7 +179,7 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
                                 type="primary"
                                 icon={<MinusOutlined />}
                                 onClick={() => {
-                                    setWorkExp((prev: any) => prev.filter((stateItem: any, stateI: number) => i !== stateI))
+                                    setWorkExp((prev) => prev.filter((stateItem, stateI: number) => i !== stateI))
 
                                     validateWorkExp()
                                 }}
@@ -188,9 +192,9 @@ const ExperienceWorkComponent = ({ workExp, setWorkExp, formik, validateWorkExp,
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => {
-                    setWorkExp((prev: any) => {
+                    setWorkExp((prev) => {
                         const newState = [...prev]
-                        newState.push({ ...initialWorkExp })
+                        newState.push({...initialWorkExp})
                         setFieldValue("experienceWork", newState)
 
                         return newState

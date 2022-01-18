@@ -1,5 +1,5 @@
 export interface ExperienceWork {
-    date: Array<object>,
+    date: string[] | object[],
     company: string,
     descr: string,
     error: string
