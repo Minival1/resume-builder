@@ -16,7 +16,7 @@ import ExperienceWorkComponent from "../../components/ExperienceWork/ExperienceW
 
 moment.locale("ru")
 
-export type WorkExpRef = {
+type WorkExpRef = {
     company: HTMLInputElement,
     descr: HTMLInputElement,
     date: HTMLInputElement
@@ -305,9 +305,7 @@ const FormResumeBuilder = () => {
                                     htmlType="submit"
                                     type="ghost"
                                     icon={<SaveOutlined />}
-                                    size="large"
-                                    onClick={() => {
-                                    }}>
+                                    size="large">
                                 Сохранить
                             </Button>
                         </Row>

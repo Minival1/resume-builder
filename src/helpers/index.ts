@@ -5,7 +5,7 @@ interface DateObj {
 }
 
 interface IObjectKeys {
-    [key: string]: string | number;
+    [key: string]: string;
 }
 
 export function diffToString(dateObj: DateObj) {
@@ -57,7 +57,7 @@ export function diffToString(dateObj: DateObj) {
 
     if (dateObj.months !== 0) {
         const monthsStr = String(dateObj.months)
-        const last: any = +monthsStr[monthsStr.length - 1]
+        const last = +monthsStr[monthsStr.length - 1]
 
         result += `${dateObj.months} ${months[last as keyof typeof months]} `
     }
